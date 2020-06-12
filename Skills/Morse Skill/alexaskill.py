@@ -22,10 +22,6 @@ valuesNo = random.randint(0,4)
 
 RANDOM_NUMBER_NO = valuesNo
 
-STATUSON = ["on", "switch on", "enable", "power on", "activate", "turn on"] # all values that are defined as synonyms in type
-STATUSOFF = ["off", "switch off", "disactivate", "turn off", "disable", "turn off"]
-
-
 # Nachfolgend sind alle Morse-Zeichen in einem sog. Dictionary definiert
 morseCode = {" ":"/","A":".-","B":"-...","C":"-.-.","D":"-..","E":".","F":"..-.",
  "G":"--.","H":"....","I":"..","J":".---","K":"-.-","L":".-..","M":"--","N":"-.",
@@ -36,6 +32,8 @@ morseCode = {" ":"/","A":".-","B":"-...","C":"-.-.","D":"-..","E":".","F":"..-."
  "-":"-....-","(":"-.--.",")":"-.--.-","'":".----.","=":"-...-","+":".-.-.",
  "/":" ","@":".--.-."}
 
+a=""
+
 einh=0.080                   # Laenge einer Einheit in Sekunden
 dit=einh*1                   # Das Dit ist eine Einheit lang
 dah=einh*3                   # Ein Dah ist dreimal so lang wie ein Dit.
@@ -45,8 +43,6 @@ pBuchst=einh*2               # Zwischen Buchstaben in einem Wort wird eine Pause
 pWort=einh*6
 
 led=24
-
-status_=""
 
 GPIO.setwarnings(False)
 GPIO.setmode(GPIO.BCM)
@@ -63,7 +59,7 @@ def morseC(symbols):
       if sym == ".":            # Die Einzelzeichen finden sich dann jeweil in sym
          beep (dit)
          time.sleep (pSymbol)          
-      elif sym == "-":          # elif ist das Else If in Python 
+      elif sym == "-":           
          beep (dah)
          time.sleep (pSymbol)
       elif sym == " ":
@@ -71,15 +67,16 @@ def morseC(symbols):
       elif sym == "/":
          time.sleep (pWort)
          
-def textToMorse(status):
+def textToMorse(morse):
    code = ""
-   for bst in status:
-      code+= morseCode[bst]+" " # "code += ..." bedeutet das Gleiche wie "code = code + ..."
-   return code
+   for bst in morse:
+    code = code + morseCode[bst]+" "
+    print(code + ' ' + bst)
+    return code
 
 @ask.launch
 def launch():
-    speech_text = 'What would you like to do? Switch light on or off? Or would you rather learn morse code?'
+    speech_text = 'What would you like to do? Would you like to learn morse code? Or would you like to learn some facts about morse code?'
     return question(speech_text).reprompt(speech_text).simple_card(speech_text)
 
 @ask.intent('FactsMorseIntent')
@@ -101,37 +98,23 @@ def AnswerIntentNo():
 def MorseStartIntent():
     speech_text = prompts.GET_AFFIRMATION_MESSAGE_MORSE
     return question(speech_text).reprompt(speech_text).simple_card(speech_text)
-    
-    
-@ask.intent('MorseCodeIntent', mapping = {'morse':'morse', 'morse':'morse'})
+        
+@ask.intent('MorseCodeIntent', mapping = {'morse':'morse','morse':'morse'})
 def MorseIntent(morse):
     morse=morse.upper()
     code=textToMorse(morse)
     morseC(code)
-    return statement('Have you seen it? It is easy! You can try another words. Just say: text and your word')
-
-@ask.intent('LightIntent', mapping = {'status':'status'})
-def Gpio_Intent(status):
-    if status in STATUSON:
-        GPIO.output(24, GPIO.HIGH)
-        return statement('Light was turned on')
-    elif status in STATUSOFF:
-       GPIO.output(24,GPIO.LOW)
-       return statement('Light was turned off')
-    else:
-        return statement('Sorry, this command is not possible!' + ' ' + status)
-
+    print(code + ' ' + morse)
+    return statement('Have you seen it? It is easy! You can try other words. Just say: text and your word')
 
 @ask.intent('AMAZON.HelpIntent')
 def help():
     speech_text = prompts.HELP_MESSAGE
     return question(speech_text).reprompt(speech_text).simple_card('HelloWorld', speech_text)
  
- 
 @ask.session_ended
 def session_ended():
     return "{}", 200
- 
  
 if __name__ == '__main__':
     if 'ASK_VERIFY_REQUESTS' in os.environ:

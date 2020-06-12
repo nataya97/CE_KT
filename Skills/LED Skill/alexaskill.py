@@ -1,36 +1,32 @@
 import logging
 import os
- 
+import subprocess
+
+from date_skill import demo
+from datetime import datetime
+
 from flask import Flask
 from flask_ask import Ask, request, session, question, statement
-import RPi.GPIO as GPIO
- 
+
 app = Flask(__name__)
 ask = Ask(app, "/")
 logging.getLogger('flask_ask').setLevel(logging.DEBUG)
- 
-STATUSON = ["on", "switch on", "enable", "power on", "activate", "turn on"] # all values that are defined as synonyms in type
-STATUSOFF = ["off", "switch off", "disactivate", "turn off", "disable", "turn off"]
- 
+
+#launch ALEXA
 @ask.launch
 def launch():
     speech_text = 'Hi! What can I do for you today?'
     return question(speech_text).reprompt(speech_text).simple_card(speech_text)
- 
-@ask.intent('LightIntent', mapping = {'status':'status'})
-def Gpio_Intent(status,room):
-    GPIO.setwarnings(False)
-    GPIO.setmode(GPIO.BCM)
-    GPIO.setup(24,GPIO.OUT)
-    if status in STATUSON:
-        GPIO.output(24,GPIO.HIGH)
-        return statement('Light was turned on')
-    elif status in STATUSOFF:
-        GPIO.output(24,GPIO.LOW)
-        return statement('Light was turned off')
-    else:
-        return statement('Sorry, this command is not possible.')
- 
+
+@ask.intent('TimeIntent')
+def time_intent():
+    demo()
+    
+    now = datetime.now()
+    dt_string = now.strftime("%d/%m/%Y %H:%M")
+    
+    return statement('The time and date is ' + dt_string)
+
 @ask.intent('AMAZON.HelpIntent')
 def help():
     speech_text = 'You can switch light on or you could switch it off!'
@@ -40,9 +36,8 @@ def help():
 @ask.session_ended
 def session_ended():
     return "{}", 200
- 
- 
-if __name__ == '__main__':
+    
+if __name__ == "__main__":
     if 'ASK_VERIFY_REQUESTS' in os.environ:
         verify = str(os.environ.get('ASK_VERIFY_REQUESTS', '')).lower()
         if verify == 'false':
